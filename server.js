@@ -1,7 +1,11 @@
+var http = require("https");
 // Setup empty JS object to act as endpoint for all routes
-projectData = {
-  asdsda: "",
-};
+projectData = {};
+let apiURL = "https://api.openweathermap.org/data/2.5/weather?zip=";
+let apiCon = ",us";
+let apiKey = "&appid=4cb6d458c8e69784bf3b8589209a199f";
+
+// let apiFurl = apiURL + apiZip + zipId.value + apiCon + apiKey;
 
 // Require Express to run server and routes
 const express = require("express");
@@ -12,6 +16,7 @@ const app = express();
 const bodyParser = require("body-parser");
 // Cors for cross origin allowance
 const cors = require("cors");
+const { json } = require("body-parser");
 
 /* Middleware*/
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -22,15 +27,56 @@ app.listen(8000, function () {
   console.log("Listening at 8000");
 });
 
-app.post("/add", function (req, res) {
+app.post("/add", function (req, response) {
   console.log("Request");
   console.log("============");
   console.log(req.body);
-  // Send to whether
-  //    res.send('hello world')
+  console.log("============");
+
+  var url = apiURL + req.body.zip + apiCon + apiKey;
+  console.log(url);
+  let reqs = http.get(url, function (res) {
+    let wdata = [];
+    res
+      .on("data", function (dd) {
+        wdata.push(dd);
+      })
+      .on("end", function () {
+        console.log("END");
+        let body = Buffer.concat(wdata);
+        let temp_data = JSON.parse(body.toString());
+        console.log("-------------");
+        console.log(temp_data);
+        if(temp_data.cod=='404'){
+        projectData = {
+          date: req.body.newDate,
+          temp: "Not Found",
+          zip: req.body.zip,
+          con: req.body.feel
+        };
+        
+       }else
+       {
+        projectData = {
+          date: req.body.newDate,
+          temp: temp_data.main.temp,
+          zip: req.body.zip,
+          con: req.body.feel
+        };
+       }
+        console.log("PROEJCT DATA");
+        console.log(projectData);
+        response.send(projectData);
+      });
+  });
+
 });
 
 app.get("/getData", function (req, res) {
+
+  JSON.stringify(projectData);
+  console.log("****************************");
+  console.log(projectData);
   res.send(projectData);
 });
 
